@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Biodigestor - Monitoramento em Tempo Real</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: slideDown 0.5s ease;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .sensor-name {
+            font-size: 0.9em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .sensor-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .sensor-unit {
+            font-size: 1em;
+            color: #999;
+            margin-bottom: 15px;
+        }
+
+        .sensor-stats {
+            font-size: 0.85em;
+            color: #999;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .filters {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeIn 0.7s ease;
+        }
+
+        .filters h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .filter-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .filter-item label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .filter-item input,
+        .filter-item select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .filter-item input:focus,
+        .filter-item select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeIn 0.8s ease;
+            overflow-x: auto;
+        }
+
+        .table-container h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            color: #333;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeIn 0.9s ease;
+        }
+
+        .chart-container h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        canvas {
+            max-height: 400px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .alert.warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding: 20px;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 0.9em;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌱 Dashboard Biodigestor</h1>
+            <p>Monitoramento em Tempo Real da Produção de Biogás</p>
+        </header>
+
+        <!-- Status em Tempo Real -->
+        <div class="dashboard">
+            <div class="card">
+                <div class="sensor-name">📊 Metano (CH₄)</div>
+                <div class="sensor-value" id="metano">--</div>
+                <div class="sensor-unit">ppm</div>
+                <div class="sensor-stats">
+                    Mín: <span id="metanoMin">--</span> | Máx: <span id="metanoMax">--</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="sensor-name">🌡️ Temperatura</div>
+                <div class="sensor-value" id="temperatura">--</div>
+                <div class="sensor-unit">°C</div>
+                <div class="sensor-stats">
+                    Mín: <span id="tempMin">--</span> | Máx: <span id="tempMax">--</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="sensor-name">🧪 pH</div>
+                <div class="sensor-value" id="pH">--</div>
+                <div class="sensor-unit">0-14</div>
+                <div class="sensor-stats">
+                    Ideal: 6.0 - 8.5
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="sensor-name">💨 Pressão</div>
+                <div class="sensor-value" id="pressao">--</div>
+                <div class="sensor-unit">kPa</div>
+                <div class="sensor-stats">
+                    Mín: <span id="pressaoMin">--</span> | Máx: <span id="pressaoMax">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status e Última Atualização -->
+        <div class="card" style="margin-bottom: 30px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <div style="color: #666; margin-bottom: 10px;">🔗 Status da Conexão</div>
+                    <div class="status" id="statusWifi">Desconectado</div>
+                </div>
+                <div>
+                    <div style="color: #666; margin-bottom: 10px;">⏰ Última Atualização</div>
+                    <div style="font-size: 1.2em; color: #667eea; font-weight: bold;" id="ultimaAtualizacao">--:--:--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros de Pesquisa -->
+        <div class="filters">
+            <h2>🔍 Filtros de Pesquisa</h2>
+            <div class="filter-group">
+                <div class="filter-item">
+                    <label for="dataInicio">Data Início:</label>
+                    <input type="date" id="dataInicio">
+                </div>
+                <div class="filter-item">
+                    <label for="dataFim">Data Fim:</label>
+                    <input type="date" id="dataFim">
+                </div>
+                <div class="filter-item">
+                    <label for="horaInicio">Hora Início:</label>
+                    <input type="time" id="horaInicio">
+                </div>
+                <div class="filter-item">
+                    <label for="horaFim">Hora Fim:</label>
+                    <input type="time" id="horaFim">
+                </div>
+                <div class="filter-item">
+                    <label for="sensorFiltro">Sensor:</label>
+                    <select id="sensorFiltro">
+                        <option value="">Todos</option>
+                        <option value="metano">Metano (CH₄)</option>
+                        <option value="temperatura">Temperatura</option>
+                        <option value="pH">pH</option>
+                        <option value="pressao">Pressão</option>
+                    </select>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" onclick="aplicarFiltros()">🔍 Pesquisar</button>
+                <button class="btn-secondary" onclick="limparFiltros()">🔄 Limpar Filtros</button>
+                <button class="btn-secondary" onclick="exportarCSV()">📥 Exportar CSV</button>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="chart-container">
+            <h2>📈 Evolução dos Sensores (Últimas 24h)</h2>
+            <canvas id="graficoTemperatura"></canvas>
+        </div>
+
+        <!-- Tabela de Dados -->
+        <div class="table-container">
+            <h2>📊 Histórico de Dados</h2>
+            <div id="loadingTable" class="loading" style="display:none;">
+                <div class="spinner"></div>
+                <p>Carregando dados...</p>
+            </div>
+            <table id="tabelaDados" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Data/Hora</th>
+                        <th>Metano (ppm)</th>
+                        <th>Temperatura (°C)</th>
+                        <th>pH</th>
+                        <th>Pressão (kPa)</th>
+                        <th>Status WiFi</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela">
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            <p>© 2026 Sistema de Monitoramento de Biodigestor | v3.0</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">Atualiza em tempo real a cada 10 segundos</p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        // URL da API (ajuste conforme seu servidor)
+        const API_URL = 'http://localhost'; // Local do ESP32
+
+        let grafico = null;
+        let dadosCompletos = [];
+
+        // Carregar dados em tempo real
+        async function carregarDados() {
+            try {
+                const response = await fetch(`${API_URL}/api/dados`);
+                if (!response.ok) throw new Error('Erro ao conectar');
+
+                const dados = await response.json();
+
+                // Atualizar cards
+                document.getElementById('metano').textContent = dados.metano?.toFixed(1) || '--';
+                document.getElementById('temperatura').textContent = dados.temperatura?.toFixed(1) || '--';
+                document.getElementById('pH').textContent = dados.ph?.toFixed(2) || '--';
+                document.getElementById('pressao').textContent = dados.pressao?.toFixed(1) || '--';
+
+                // Status WiFi
+                const statusEl = document.getElementById('statusWifi');
+                if (dados.wifi) {
+                    statusEl.textContent = '✅ Conectado';
+                    statusEl.className = 'status online';
+                } else {
+                    statusEl.textContent = '❌ Desconectado';
+                    statusEl.className = 'status offline';
+                }
+
+                // Última atualização
+                document.getElementById('ultimaAtualizacao').textContent = dados.timestamp || new Date().toLocaleTimeString();
+
+            } catch (error) {
+                console.error('Erro:', error);
+                document.getElementById('statusWifi').textContent = '❌ Desconectado';
+                document.getElementById('statusWifi').className = 'status offline';
+            }
+        }
+
+        // Carregar estatísticas
+        async function carregarEstatisticas() {
+            try {
+                const response = await fetch(`${API_URL}/api/stats`);
+                if (!response.ok) throw new Error('Erro');
+
+                const stats = await response.json();
+
+                document.getElementById('metanoMin').textContent = stats.metano.min.toFixed(1);
+                document.getElementById('metanoMax').textContent = stats.metano.max.toFixed(1);
+
+                document.getElementById('tempMin').textContent = stats.temperatura.min.toFixed(1);
+                document.getElementById('tempMax').textContent = stats.temperatura.max.toFixed(1);
+
+                document.getElementById('pressaoMin').textContent = stats.pressao.min.toFixed(1);
+                document.getElementById('pressaoMax').textContent = stats.pressao.max.toFixed(1);
+
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+            }
+        }
+
+        // Carregar logs (histórico)
+        async function carregarLogs() {
+            try {
+                document.getElementById('loadingTable').style.display = 'block';
+
+                const response = await fetch(`${API_URL}/api/logs`);
+                if (!response.ok) throw new Error('Erro');
+
+                const texto = await response.text();
+                const linhas = texto.trim().split('\n');
+
+                dadosCompletos = [];
+                const tbody = document.getElementById('corpoTabela');
+                tbody.innerHTML = '';
+
+                linhas.slice(1).reverse().forEach((linha, index) => {
+                    if (linha.trim()) {
+                        const valores = linha.split(',');
+                        dadosCompletos.push(valores);
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${valores[0]}</td>
+                            <td>${valores[1]}</td>
+                            <td>${valores[2]}</td>
+                            <td>${valores[3]}</td>
+                            <td>${valores[4]}</td>
+                            <td>${valores[5]}</td>
+                            <td>${valores[6]}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+                });
+
+                document.getElementById('tabelaDados').style.display = 'table';
+                document.getElementById('loadingTable').style.display = 'none';
+
+                atualizarGrafico();
+
+            } catch (error) {
+                console.error('Erro ao carregar logs:', error);
+                document.getElementById('loadingTable').innerHTML = '<p>❌ Erro ao carregar dados. Verifique a conexão com o ESP32.</p>';
+            }
+        }
+
+        // Atualizar gráfico
+        function atualizarGrafico() {
+            const ctx = document.getElementById('graficoTemperatura').getContext('2d');
+
+            const labels = dadosCompletos.map(d => d[1]);
+            const temperatures = dadosCompletos.map(d => parseFloat(d[3]));
+            const pressoes = dadosCompletos.map(d => parseFloat(d[5]));
+            const metanos = dadosCompletos.map(d => parseFloat(d[2]));
+
+            if (grafico) {
+                grafico.destroy();
+            }
+
+            grafico = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Temperatura (°C)',
+                            data: temperatures,
+                            borderColor: '#ff6b6b',
+                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Pressão (kPa)',
+                            data: pressoes,
+                            borderColor: '#4ecdc4',
+                            backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                            tension: 0.4,
+                            fill: false,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Temperatura (°C)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Pressão (kPa)' },
+                            grid: { drawOnChartArea: false },
+                        }
+                    }
+                }
+            });
+        }
+
+        // Aplicar filtros
+        function aplicarFiltros() {
+            const dataInicio = document.getElementById('dataInicio').value;
+            const dataFim = document.getElementById('dataFim').value;
+            const horaInicio = document.getElementById('horaInicio').value;
+            const horaFim = document.getElementById('horaFim').value;
+            const sensor = document.getElementById('sensorFiltro').value;
+
+            let dadosFiltrados = dadosCompletos;
+
+            if (dataInicio) {
+                dadosFiltrados = dadosFiltrados.filter(d => d[1].substring(0, 10) >= dataInicio);
+            }
+            if (dataFim) {
+                dadosFiltrados = dadosFiltrados.filter(d => d[1].substring(0, 10) <= dataFim);
+            }
+            if (horaInicio) {
+                dadosFiltrados = dadosFiltrados.filter(d => d[1].substring(11, 16) >= horaInicio);
+            }
+            if (horaFim) {
+                dadosFiltrados = dadosFiltrados.filter(d => d[1].substring(11, 16) <= horaFim);
+            }
+
+            const tbody = document.getElementById('corpoTabela');
+            tbody.innerHTML = '';
+
+            dadosFiltrados.forEach(valores => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${valores[0]}</td>
+                    <td>${valores[1]}</td>
+                    <td>${valores[2]}</td>
+                    <td>${valores[3]}</td>
+                    <td>${valores[4]}</td>
+                    <td>${valores[5]}</td>
+                    <td>${valores[6]}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Limpar filtros
+        function limparFiltros() {
+            document.getElementById('dataInicio').value = '';
+            document.getElementById('dataFim').value = '';
+            document.getElementById('horaInicio').value = '';
+            document.getElementById('horaFim').value = '';
+            document.getElementById('sensorFiltro').value = '';
+            carregarLogs();
+        }
+
+        // Exportar como CSV
+        function exportarCSV() {
+            let csv = 'Nº,Data/Hora,Metano (ppm),Temperatura (°C),pH,Pressão (kPa),WiFi\n';
+            dadosCompletos.forEach(d => {
+                csv += d.join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `biodigestor_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+        }
+
+        // Atualizar dados a cada 10 segundos
+        setInterval(() => {
+            carregarDados();
+            carregarEstatisticas();
+        }, 10000);
+
+        // Iniciar
+        carregarDados();
+        carregarEstatisticas();
+        carregarLogs();
+    </script>
+</body>
+</html>
