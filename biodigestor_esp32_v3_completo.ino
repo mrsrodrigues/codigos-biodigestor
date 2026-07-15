@@ -152,16 +152,12 @@ void processarTarefas() {
 // Leitura dos sensores
 
 void lerSensores() {
-  // --- MQ-4 (Metano) ---
   lerMetano();
-  
-  // --- DS18B20 (Temperatura) ---
+
   lerTemperatura();
-  
-  // --- pH ---
+
   lerPH();
-  
-  // --- Pressão ---
+
   lerPressao();
 }
 
