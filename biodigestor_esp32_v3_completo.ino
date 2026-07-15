@@ -6,6 +6,7 @@
 // Bibliotecas
 
 #include <WiFi.h>                    // WiFi para ESP32
+#include <Wire.h>                    // I2C para OLED
 #include <Adafruit_SSD1306.h>        // Display OLED SSD1306
 #include <Adafruit_GFX.h>            // Gráficos para OLED
 #include <OneWire.h>                 // Comunicação 1-Wire (DS18B20)
@@ -21,17 +22,17 @@ const char* ssid = "seu_SSID_aqui";
 const char* password = "sua_senha_aqui";
 
 // --- Pinos ---
-#define MQ4_PIN 34                   // GPIO 34 (ADC) - Sensor MQ-4
-#define TEMP_PIN 4                   // GPIO 4 (1-Wire) - DS18B20
-#define PH_PIN 35                    // GPIO 35 (ADC) - pH BNC
-#define PRESSURE_PIN 32              // GPIO 32 (ADC) - Sensor Pressão
+#define MQ4_PIN 101                  // ADC - Sensor MQ-4
+#define TEMP_PIN 102                 // Pino virtual - DS18B20
+#define PH_PIN 106                   // ADC - pH BNC
+#define PRESSURE_PIN 107             // ADC - Sensor Pressão
 #define SCREEN_WIDTH 128             // Largura OLED
 #define SCREEN_HEIGHT 64             // Altura OLED
 
 // --- I2C para OLED ---
 #define OLED_ADDR 0x3C               // Endereço I2C padrão
-#define SDA_PIN 21                   // GPIO 21 (SDA)
-#define SCL_PIN 22                   // GPIO 22 (SCL)
+#define SDA_PIN 17                   // GPIO 17 (SDA)
+#define SCL_PIN 18                   // GPIO 18 (SCL)
 
 // --- Intervalos ---
 #define SENSOR_INTERVAL 10000        // Leitura sensores: 10s
@@ -102,6 +103,8 @@ void inicializarSistema() {
   } else {
     Serial.println("OK");
   }
+
+  Wire.begin(SDA_PIN, SCL_PIN);
 
   Serial.print("Inicializando display... ");
   if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {

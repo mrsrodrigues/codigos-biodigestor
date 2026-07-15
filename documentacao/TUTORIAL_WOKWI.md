@@ -55,7 +55,7 @@ Wokwi é um **simulador online gratuito** para Arduino, ESP32 e outros microcont
 ### 1. OLED SSD1306 (Display)
 
 **Adição Manual:**
-```
+```?
 1. Clique no ícone "+" (Direita)
 2. Procure: "SSD1306"
 3. Clique em "SSD1306 I2C OLED Display"
@@ -65,17 +65,17 @@ Wokwi é um **simulador online gratuito** para Arduino, ESP32 e outros microcont
 **Conexão:**
 ```
 OLED SSD1306:
-  GND → GND (ESP32)
-  VCC → 3.3V (ESP32)
-  SCL → GPIO 22 (ESP32)
-  SDA → GPIO 21 (ESP32)
+  GND → GND (ESP32) // preto
+  VCC → 3.3V (ESP32) // vermelho
+  SCL → GPIO 22 (ESP32) // roxo
+  SDA → GPIO 21 (ESP32) // verde
 
 No Wokwi (arrastar fios):
 1. Clique no pino GND do OLED
 2. Arraste até GND do ESP32
 3. Repita para outros pinos
 ```
-
+?
 ### 2. Sensor DS18B20 (Temperatura à prova d'água)
 
 **Adição:**
@@ -111,9 +111,9 @@ Com resistor pull-up:
 **Conexão:**
 ```
 MQ-4 (4 pinos):
-  VCC → 5V (ou 3.3V)
-  GND → GND
-  A0 (Analógico) → GPIO 34
+  VCC → 5V (ou 3.3V) // vermelho
+  GND → GND // preto?
+  A0 (Analógico) → GPIO 34 // amarelo
   D0 (Digital) → (Não usar)
 ```
 
@@ -130,9 +130,9 @@ MQ-4 (4 pinos):
 **Conexão:**
 ```
 MPX5700:
-  GND → GND
-  VCC → 3.3V
-  VOUT → GPIO 32 (Analógico)
+  GND → GND // preto
+  VCC → 3.3V // vermelho
+  VOUT → GPIO 32 (Analógico) // amarelo
 ```
 
 ### 5. Módulo pH BNC PH4502C
@@ -148,9 +148,9 @@ MPX5700:
 **Conexão:**
 ```
 PH4502C:
-  GND → GND
-  VCC → 5V
-  PH → GPIO 35 (Analógico)
+  GND → GND // preto
+  VCC → 5V // laranja
+  PH → GPIO 35 (Analógico) // verde
 ```
 
 ### 6. Botão de Reset (Opcional)
