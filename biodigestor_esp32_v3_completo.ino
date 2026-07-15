@@ -1,17 +1,10 @@
-/*
-  Sistema biodigestor com leitura de sensores, display OLED, WiFi e web server.
-  Versão: 3.0.0
-*/
-
 // Bibliotecas
-
 #include <WiFi.h>                    // WiFi para ESP32
 #include <Wire.h>                    // I2C para OLED
 #include <Adafruit_SSD1306.h>        // Display OLED SSD1306
 #include <Adafruit_GFX.h>            // Gráficos para OLED
 #include <OneWire.h>                 // Comunicação 1-Wire (DS18B20)
 #include <DallasTemperature.h>       // Biblioteca DS18B20
-#include <WebServer.h>               // Servidor HTTP para web
 #include <SPIFFS.h>                  // Armazenamento em Flash
 #include <time.h>                    // Timestamp
 
@@ -52,7 +45,6 @@ const char* password = "sua_senha_aqui";
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 OneWire oneWire(TEMP_PIN);
 DallasTemperature sensoresTemp(&oneWire);
-WebServer servidor(80);
 
 // Variáveis
 
@@ -89,7 +81,6 @@ void setup() {
 }
 
 void loop() {
-  servidor.handleClient();
   processarTarefas();
 }
 
@@ -130,7 +121,6 @@ void inicializarSistema() {
   conectarWiFi();
 
   configTime(-3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
-  configurarServidorWeb();
   startTime = millis();
 
   Serial.println("Sistema pronto!");
@@ -173,11 +163,9 @@ void lerSensores() {
   
   // --- Pressão ---
   lerPressao();
-  
 }
 
 void lerMetano() {
-  
   // Lê valor analógico do MQ-4
   int valor = analogRead(MQ4_PIN);
   
@@ -191,11 +179,9 @@ void lerMetano() {
   // Atualiza mín/máx
   if (metano < metanoMin) metanoMin = metano;
   if (metano > metanoMax) metanoMax = metano;
-  
 }
 
 void lerTemperatura() {
-  
   sensoresTemp.requestTemperatures();
   temperatura = sensoresTemp.getTempCByIndex(0);
   
@@ -207,11 +193,9 @@ void lerTemperatura() {
   
   if (temperatura < tempMin) tempMin = temperatura;
   if (temperatura > tempMax) tempMax = temperatura;
-  
 }
 
 void lerPH() {
-  
   // Lê múltiplas amostras
   float voltageSum = 0;
   for (int i = 0; i < 10; i++) {
@@ -228,11 +212,9 @@ void lerPH() {
   
   if (pH < phMin) phMin = pH;
   if (pH > phMax) phMax = pH;
-  
 }
 
 void lerPressao() {
-  
   // Lê sensor de pressão
   int valor = analogRead(PRESSURE_PIN);
   
@@ -241,13 +223,11 @@ void lerPressao() {
   
   if (pressao < pressaoMin) pressaoMin = pressao;
   if (pressao > pressaoMax) pressaoMax = pressao;
-  
 }
 
 // Alertas
 
 void verificarAlertas() {
-  
   if (temperatura < TEMP_MIN_SAFE || temperatura > TEMP_MAX_SAFE) {
     Serial.print("🔴 ALERTA TEMPERATURA: ");
     Serial.println(temperatura);
@@ -261,13 +241,11 @@ void verificarAlertas() {
   if (metano > 500) {
     Serial.println("🔴 ALERTA: Nível alto de metano!");
   }
-  
 }
 
 // Display
 
 void atualizarDisplay() {
-  
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
@@ -322,13 +300,11 @@ void atualizarDisplay() {
   char buffer[30];
   strftime(buffer, sizeof(buffer), "%H:%M:%S", timeinfo);
   ultimaAtualizacao = String(buffer);
-  
 }
 
 // Log
 
 void logarDados() {
-  
   logCounter++;
   
   time_t now = time(nullptr);
@@ -353,7 +329,6 @@ void logarDados() {
     Serial.print(logCounter);
     Serial.println(" gravado");
   }
-  
 }
 
 // WiFi
@@ -377,119 +352,4 @@ void conectarWiFi() {
     wifiConnected = false;
     Serial.println("✗ WiFi offline");
   }
-  
 }
-
-// Web server
-
-void configurarServidorWeb() {
-  
-  servidor.on("/", HTTP_GET, handleRoot);
-  servidor.on("/api/dados", HTTP_GET, handleApiDados);
-  servidor.on("/api/stats", HTTP_GET, handleApiStats);
-  servidor.on("/api/logs", HTTP_GET, handleApiLogs);
-  
-  servidor.begin();
-  Serial.println("Servidor web iniciado na porta 80");
-  
-}
-
-void handleRoot() {
-  
-  String html = "<!DOCTYPE html>";
-  html += "<html>";
-  html += "<head>";
-  html += "<meta charset='UTF-8'>";
-  html += "<meta name='viewport' content='width=device-width'>";
-  html += "<title>Biodigestor</title>";
-  html += "<style>";
-  html += "body { font-family: Arial; margin: 20px; background: #f0f0f0; }";
-  html += ".container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }";
-  html += "h1 { color: #333; }";
-  html += ".sensor { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #4CAF50; }";
-  html += ".sensor-value { font-size: 24px; font-weight: bold; color: #4CAF50; }";
-  html += ".sensor-label { font-size: 12px; color: #666; }";
-  html += ".status { padding: 10px; border-radius: 5px; margin: 10px 0; }";
-  html += ".status-ok { background: #d4edda; color: #155724; }";
-  html += ".status-warning { background: #fff3cd; color: #856404; }";
-  html += "</style>";
-  html += "</head>";
-  html += "<body>";
-  html += "<div class='container'>";
-  html += "<h1>🌱 Sistema Biodigestor v3.0</h1>";
-  html += "<p>Última atualização: " + ultimaAtualizacao + "</p>";
-  html += "<div class='sensor'>";
-  html += "<div class='sensor-label'>METANO (ppm)</div>";
-  html += "<div class='sensor-value'>" + String(metano, 1) + "</div>";
-  html += "</div>";
-  html += "<div class='sensor'>";
-  html += "<div class='sensor-label'>TEMPERATURA (°C)</div>";
-  html += "<div class='sensor-value'>" + String(temperatura, 1) + "</div>";
-  html += "</div>";
-  html += "<div class='sensor'>";
-  html += "<div class='sensor-label'>pH</div>";
-  html += "<div class='sensor-value'>" + String(pH, 2) + "</div>";
-  html += "</div>";
-  html += "<div class='sensor'>";
-  html += "<div class='sensor-label'>PRESSÃO (kPa)</div>";
-  html += "<div class='sensor-value'>" + String(pressao, 1) + "</div>";
-  html += "</div>";
-  html += "<div class='status " + String(wifiConnected ? "status-ok" : "status-warning") + "'>";
-  html += "WiFi: " + String(wifiConnected ? "Conectado" : "Desconectado");
-  html += "</div>";
-  html += "<p><small>Leitura #" + String(readCounter) + " | API disponível em /api/dados</small></p>";
-  html += "</div>";
-  html += "</body>";
-  html += "</html>";
-  
-  servidor.send(200, "text/html", html);
-  
-}
-
-void handleApiDados() {
-  
-  String json = "{";
-  json += "\"metano\":" + String(metano, 2) + ",";
-  json += "\"temperatura\":" + String(temperatura, 2) + ",";
-  json += "\"ph\":" + String(pH, 2) + ",";
-  json += "\"pressao\":" + String(pressao, 2) + ",";
-  json += "\"timestamp\":\"" + ultimaAtualizacao + "\",";
-  json += "\"wifi\":" + String(wifiConnected ? "true" : "false");
-  json += "}";
-  
-  servidor.send(200, "application/json", json);
-  
-}
-
-void handleApiStats() {
-  
-  String json = "{";
-  json += "\"metano\":{\"min\":" + String(metanoMin, 2) + ",\"max\":" + String(metanoMax, 2) + "},";
-  json += "\"temperatura\":{\"min\":" + String(tempMin, 2) + ",\"max\":" + String(tempMax, 2) + "},";
-  json += "\"ph\":{\"min\":" + String(phMin, 2) + ",\"max\":" + String(phMax, 2) + "},";
-  json += "\"pressao\":{\"min\":" + String(pressaoMin, 2) + ",\"max\":" + String(pressaoMax, 2) + "}";
-  json += "}";
-  
-  servidor.send(200, "application/json", json);
-  
-}
-
-void handleApiLogs() {
-  
-  if (!SPIFFS.exists("/dados_biodigestor.csv")) {
-    servidor.send(404, "text/plain", "Arquivo não encontrado");
-    return;
-  }
-  
-  File file = SPIFFS.open("/dados_biodigestor.csv", "r");
-  String conteudo = "";
-  while (file.available()) {
-    conteudo += (char)file.read();
-  }
-  file.close();
-  
-  servidor.send(200, "text/csv", conteudo);
-  
-}
-
-// Fim
