@@ -162,7 +162,6 @@ void processarTarefas() {
 // Leitura dos sensores
 
 void lerSensores() {
-  
   // --- MQ-4 (Metano) ---
   lerMetano();
   
@@ -360,7 +359,6 @@ void logarDados() {
 // WiFi
 
 void conectarWiFi() {
-  
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   
