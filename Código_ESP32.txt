@@ -1,0 +1,75 @@
+// Código base do projeto
+#define BLYNK_TEMPLATE_ID "SEU_TEMPLATE_ID_AQUI"
+#define BLYNK_DEVICE_NAME "SEU_NOME_DE_DISPOSITIVO_AQUI"
+#define BLYNK_AUTH_TOKEN "SEU_TOKEN_AQUI"
+
+#define BLYNK_PRINT Serial
+
+#include <WiFi.h>
+#include <BlynkSimpleEsp32.h>
+
+char auth[] = BLYNK_AUTH_TOKEN;
+char ssid[] = "NOME_DA_REDE";
+char pass[] = "SENHA_DO_WIFI";
+
+#define uS_TO_S_FACTOR 1000000ULL
+#define TEMPO_DORMINDO 30
+
+TaskHandle_t TaskRede;
+TaskHandle_t TaskGeral;
+
+volatile bool leituraConcluida = false;
+volatile bool envioConcluido = false;
+volatile int valorSensor = 0;
+
+void setup() {
+  Serial.begin(115200);
+  setCpuFrequencyMhz(80);
+
+  Serial.print("CPU: ");
+  Serial.print(getCpuFrequencyMhz());
+  Serial.println(" MHz");
+
+  esp_sleep_enable_timer_wakeup(TEMPO_DORMINDO * uS_TO_S_FACTOR);
+
+  Serial.println("Conectando ao WiFi e ao Blynk...");
+  Blynk.begin(auth, ssid, pass);
+
+  xTaskCreatePinnedToCore(loopRede, "Tarefa_Blynk", 10000, NULL, 1, &TaskRede, 0);
+  xTaskCreatePinnedToCore(loopGeral, "Tarefa_Sensores", 5000, NULL, 1, &TaskGeral, 1);
+}
+
+void loop() {
+  if (leituraConcluida && envioConcluido) {
+    Serial.println("Fim. Indo dormir...");
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
+    esp_deep_sleep_start();
+  }
+
+  delay(10);
+}
+
+void loopRede(void *pvParameters) {
+  while (!leituraConcluida) {
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+  }
+
+  Blynk.virtualWrite(V0, valorSensor);
+
+  for (int i = 0; i < 5; i++) {
+    Blynk.run();
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+  }
+
+  envioConcluido = true;
+  vTaskDelete(NULL);
+}
+
+void loopGeral(void *pvParameters) {
+  valorSensor = analogRead(34);
+  leituraConcluida = true;
+
+  vTaskDelay(10 / portTICK_PERIOD_MS);
+  vTaskDelete(NULL);
+}

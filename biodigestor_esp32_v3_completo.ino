@@ -1,25 +1,9 @@
 /*
-  ============================================================================
-  SISTEMA BIODIGESTOR - VERSÃO 3.0.0 COM TODOS OS SENSORES
-  ============================================================================
-  
-  Sensores Utilizados:
-    - MQ-4: Sensor de metano (biogás)
-    - DS18B20: Temperatura à prova d'água (1-Wire)
-    - PH4502C: Sensor de pH BNC (analógico)
-    - Sensor de Pressão 1.2 MPa (analógico)
-    - OLED SSD1306 (Display 0.96" - I2C)
-    - WiFi integrado ESP32
-  
+  Sistema biodigestor com leitura de sensores, display OLED, WiFi e web server.
   Versão: 3.0.0
-  Data: 12 de Junho de 2026
-  
-  ============================================================================
 */
 
-// ============================================================================
-// INCLUSÃO DE BIBLIOTECAS
-// ============================================================================
+// Bibliotecas
 
 #include <WiFi.h>                    // WiFi para ESP32
 #include <Adafruit_SSD1306.h>        // Display OLED SSD1306
@@ -30,9 +14,7 @@
 #include <SPIFFS.h>                  // Armazenamento em Flash
 #include <time.h>                    // Timestamp
 
-// ============================================================================
-// DEFINIÇÕES E CONSTANTES
-// ============================================================================
+// Configurações e pinos
 
 // --- WiFi ---
 const char* ssid = "seu_SSID_aqui";
@@ -64,18 +46,14 @@ const char* password = "sua_senha_aqui";
 #define pH_MAX 8.5
 #define PRESSURE_MAX 1200.0          // kPa
 
-// ============================================================================
-// OBJETOS E INSTÂNCIAS
-// ============================================================================
+// Objetos
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 OneWire oneWire(TEMP_PIN);
 DallasTemperature sensoresTemp(&oneWire);
 WebServer servidor(80);
 
-// ============================================================================
-// VARIÁVEIS GLOBAIS
-// ============================================================================
+// Variáveis
 
 // --- Sensores ---
 float metano = 0.0;                  // ppm de metano (MQ-4)
@@ -101,30 +79,31 @@ int logCounter = 0;
 bool wifiConnected = false;
 String ultimaAtualizacao = "Aguardando...";
 
-// ============================================================================
-// FUNÇÃO SETUP
-// ============================================================================
+// Setup
 
 void setup() {
-  
   Serial.begin(SERIAL_BAUD);
   delay(100);
-  
+  inicializarSistema();
+}
+
+void loop() {
+  servidor.handleClient();
+  processarTarefas();
+}
+
+void inicializarSistema() {
   Serial.println("\n\n");
-  Serial.println("=================================================");
-  Serial.println("   BIODIGESTOR - v3.0.0 COM TODOS OS SENSORES    ");
-  Serial.println("=================================================");
-  
-  // Inicializa SPIFFS
+  Serial.println("=== BIODIGESTOR v3.0 ===");
+
   Serial.print("Inicializando SPIFFS... ");
   if (!SPIFFS.begin(true)) {
     Serial.println("FALHA!");
   } else {
     Serial.println("OK");
   }
-  
-  // Inicializa Display OLED
-  Serial.print("Inicializando Display OLED... ");
+
+  Serial.print("Inicializando display... ");
   if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
     Serial.println("FALHA!");
   } else {
@@ -137,69 +116,47 @@ void setup() {
     display.println("Inicializando...");
     display.display();
   }
-  
-  // Inicializa DS18B20
+
   Serial.print("Inicializando DS18B20... ");
   sensoresTemp.begin();
   delay(500);
   Serial.println("OK");
-  
-  // Conecta WiFi
+
   Serial.print("Conectando WiFi: ");
   Serial.println(ssid);
   conectarWiFi();
-  
-  // Configura Timezone
+
   configTime(-3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
-  
-  // Configura endpoints HTTP
   configurarServidorWeb();
-  
   startTime = millis();
-  
-  Serial.println("=================================================");
+
   Serial.println("Sistema pronto!");
-  Serial.println("=================================================\n");
-  
 }
 
-// ============================================================================
-// FUNÇÃO LOOP
-// ============================================================================
-
-void loop() {
-  
-  servidor.handleClient();
-  
+void processarTarefas() {
   unsigned long timeNow = millis();
-  
-  // --- Leitura de Sensores (10s) ---
+
   if (timeNow - lastSensorRead >= SENSOR_INTERVAL) {
     lastSensorRead = timeNow;
     readCounter++;
-    
+
     lerSensores();
     verificarAlertas();
-    Serial.println(".");  // Indica que está rodando
+    Serial.println(".");
   }
-  
-  // --- Atualiza Display (1s) ---
+
   if (timeNow - lastDisplayUpdate >= DISPLAY_INTERVAL) {
     lastDisplayUpdate = timeNow;
     atualizarDisplay();
   }
-  
-  // --- Logging em Arquivo (1h) ---
+
   if (timeNow - lastLogging >= LOGGING_INTERVAL) {
     lastLogging = timeNow;
     logarDados();
   }
-  
 }
 
-// ============================================================================
-// FUNÇÕES DE LEITURA DE SENSORES
-// ============================================================================
+// Leitura dos sensores
 
 void lerSensores() {
   
@@ -227,7 +184,7 @@ void lerMetano() {
   
   // Calibração para ppm de metano
   // Fórmula aproximada: ppm = (voltagem - 0.9) * 200
-  metano = max(0, (voltagem - 0.9) * 200.0);
+  metano = max(0.0f, (voltagem - 0.9f) * 200.0f);
   
   // Atualiza mín/máx
   if (metano < metanoMin) metanoMin = metano;
@@ -285,9 +242,7 @@ void lerPressao() {
   
 }
 
-// ============================================================================
-// FUNÇÕES DE VERIFICAÇÃO
-// ============================================================================
+// Alertas
 
 void verificarAlertas() {
   
@@ -307,9 +262,7 @@ void verificarAlertas() {
   
 }
 
-// ============================================================================
-// FUNÇÕES DE DISPLAY OLED
-// ============================================================================
+// Display
 
 void atualizarDisplay() {
   
@@ -370,9 +323,7 @@ void atualizarDisplay() {
   
 }
 
-// ============================================================================
-// FUNÇÕES DE LOGGING
-// ============================================================================
+// Log
 
 void logarDados() {
   
@@ -403,9 +354,7 @@ void logarDados() {
   
 }
 
-// ============================================================================
-// FUNÇÕES DE CONECTIVIDADE
-// ============================================================================
+// WiFi
 
 void conectarWiFi() {
   
@@ -430,9 +379,7 @@ void conectarWiFi() {
   
 }
 
-// ============================================================================
-// SERVIDOR WEB
-// ============================================================================
+// Web server
 
 void configurarServidorWeb() {
   
@@ -544,6 +491,4 @@ void handleApiLogs() {
   
 }
 
-// ============================================================================
-// FIM DO CÓDIGO
-// ============================================================================
+// Fim
