@@ -15,10 +15,10 @@ const char* ssid = "seu_SSID_aqui";
 const char* password = "sua_senha_aqui";
 
 // --- Pinos ---
-#define MQ4_PIN 101                  // ADC - Sensor MQ-4
-#define TEMP_PIN 102                 // Pino virtual - DS18B20
-#define PH_PIN 106                   // ADC - pH BNC
-#define PRESSURE_PIN 107             // ADC - Sensor Pressão
+#define MQ4_PIN 1                  // ADC - Sensor MQ-4
+#define TEMP_PIN 2                 // Pino virtual - DS18B20
+#define PH_PIN 6                   // ADC - pH BNC
+#define PRESSURE_PIN 7             // ADC - Sensor Pressão
 #define SCREEN_WIDTH 128             // Largura OLED
 #define SCREEN_HEIGHT 64             // Altura OLED
 
